@@ -1,15 +1,15 @@
 import { createApp } from 'vue'
 import App from './App.vue'
+import VueCookies from 'vue3-cookies'
 import { createPinia } from 'pinia'
-import { AuthPlugin } from './plugins/auth';
-import { APIPlugin } from './plugins/api';
-import { RouterPlugin } from './plugins/router'
+import { APIPlugin } from '@/plugins/api';
+import { RouterPlugin } from '@/plugins/router'
 
 const app = createApp(App)
 
+app.use(VueCookies)
 app.use(createPinia())
-app.use(AuthPlugin)
-app.use(APIPlugin, { authPlugin: app.config.globalProperties.$auth })
-app.use(RouterPlugin, { authPlugin: app.config.globalProperties.$auth })
+app.use(APIPlugin)
+app.use(RouterPlugin)
 
 app.mount('#app')

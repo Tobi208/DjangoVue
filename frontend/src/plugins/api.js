@@ -1,4 +1,6 @@
 import axios from 'axios'
+import router from '@/plugins/router'
+import { useAuthStore } from '@/stores/auth'
 
 function createAPIInstance() {
   return axios.create({
@@ -9,17 +11,22 @@ function createAPIInstance() {
   })
 }
 
-export function APIPlugin(app, { authPlugin }) {
+export function APIPlugin(app) {
   const api = createAPIInstance()
+  const auth = useAuthStore()
 
-  api.interceptors.request.use((config) => {
-    const { token } = authPlugin.state
-    if (token) {
+  api.interceptors.request.use(async (config) => {
+    try {
+      const token = await auth.getToken()
       config.headers.Authorization = `Bearer ${token}`
+      return config
+    } catch (error) {
+      auth.logout()
+      router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
+      return new Promise(() => {})
     }
-    return config
-  }, (error) => {
-    return Promise.reject(error)
+  }, error => {
+    return Promise.reject(error);
   })
 
   app.config.globalProperties.$api = api

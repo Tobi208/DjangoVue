@@ -5,7 +5,6 @@ import { RouterLink, RouterView } from 'vue-router'
 <template>
   <header>
     <div class="wrapper">
-      <div class="doer">You did it!</div>
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/login">Login</RouterLink>
@@ -17,7 +16,7 @@ import { RouterLink, RouterView } from 'vue-router'
   <RouterView />
 </template>
 
-<style lang="sass" scoped>
-.doer
-  background-color: grey
+<style lang="sass">
+*
+  box-sizing: border-box
 </style>
