@@ -2,10 +2,17 @@ import { defineStore } from 'pinia'
 import { useCookies } from 'vue3-cookies'
 import { getExpiration } from '@/plugins/utils'
 
+const { cookies } = useCookies()
+
+/**
+ * Store to handle all things regarding authentication.
+ * Synchronizes access and refresh tokens and auth status with cookies.
+ * Automatically refreshes token if possible.
+ */
 export const useAuthStore = defineStore('auth', {
   state: () => {
-    const { cookies } = useCookies()
-    return {
+  // get state from cookies or default to empty state
+  return {
       user: cookies.get('user') || null,
       token: cookies.get('token') || null,
       refreshToken: cookies.get('refreshToken') || null,
@@ -13,24 +20,35 @@ export const useAuthStore = defineStore('auth', {
     }
   },
   actions: {
+
+    // used by setters to sync with cookies
+    syncCookie(name, value, expiration) {
+      if (value)
+        cookies.set(name, value, expiration)
+      else
+        cookies.remove(name)
+    },
+  
+    // setters that synchronize with cookies
     setUser(user, expiration) {
       this.user = user
-      const { cookies } = useCookies()
-      if (user)
-        cookies.set('user', user, expiration)
-      else
-        cookies.remove('user')
+      this.syncCookie('user', user, expiration)
     },
     setToken(token, expiration) {
       this.token = token
-      const { cookies } = useCookies()
-      if (token)
-        cookies.set('token', token, expiration)
-      else
-        cookies.remove('token')
+      this.syncCookie('token', token, expiration)
     },
+    setRefreshToken(refreshToken, expiration) {
+      this.refreshToken = refreshToken
+      this.syncCookie('refreshToken', refreshToken, expiration)
+    },
+    setIsLoggedIn(isLoggedIn, expiration) {
+      this.isLoggedIn = isLoggedIn
+      this.syncCookie('isLoggedIn', isLoggedIn, expiration)
+    },
+
+    // getters that might trigger actions
     async getToken() {
-      const { cookies } = useCookies()
       if (cookies.isKey('token')) {
         return this.token
       } else {
@@ -38,31 +56,26 @@ export const useAuthStore = defineStore('auth', {
         return this.token
       }
     },
-    setRefreshToken(refreshToken, expiration) {
-      this.refreshToken = refreshToken
-      const { cookies } = useCookies()
-      if (refreshToken)
-        cookies.set('refreshToken', refreshToken, expiration)
-      else
-        cookies.remove('refreshToken')
-    },
-    setIsLoggedIn(isLoggedIn, expiration) {
-      this.isLoggedIn = isLoggedIn
-      const { cookies } = useCookies()
-      if (isLoggedIn)
-        cookies.set('isLoggedIn', isLoggedIn, expiration)
-      else
-        cookies.remove('isLoggedIn')
-    },
+
+    // actions
+    /**
+     * Acquire access and refresh token from backend
+     * 
+     * @param {string} username 
+     * @param {string} password 
+     */
     async login(username, password) {
+      // attempt login
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}token/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
       })
+      // probably invalid credentials on failure
       if (response.status !== 200) {
           this.logout()
           throw new Error('Login failed')
+      // populate state on success
       } else {
           const r = await response.json()
           const tokenExpiration = getExpiration(r.access)
@@ -73,18 +86,24 @@ export const useAuthStore = defineStore('auth', {
           this.setIsLoggedIn(true, refreshTokenExpiration)
       }
     },
+    
+    /**
+     * Acquire a new access token through the refresh token
+     */
     async refresh() {
-      console.log('refetching')
-      const { cookies } = useCookies()
+      // check if a refresh token is present in the cookies
       if (cookies.isKey('refreshToken')) {
+        // attempt refresh
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}token/refresh/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh: this.refreshToken })
         })
+        // probably internal server error on failure
         if (response.status !== 200) {
           this.logout()
           throw new Error('Token refresh failed')
+        // populate state on success
         } else {
           const r = await response.json()
           const tokenExpiration = getExpiration(r.access)
@@ -94,10 +113,17 @@ export const useAuthStore = defineStore('auth', {
           this.setUser(this.user, refreshTokenExpiration)
           this.setIsLoggedIn(true, refreshTokenExpiration)
         }
+      // require a reset of the authentication
+      // catching this error should redirect to the login page
       } else {
+        this.logout()
         throw new Error('Refresh token expired')
       }
     },
+
+    /**
+     * Reset auth state to empty
+     */
     logout() {
       this.setToken(null, null)
       this.setRefreshToken(null, null)
