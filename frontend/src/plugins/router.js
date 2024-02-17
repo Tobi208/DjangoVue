@@ -31,6 +31,8 @@ const router = createRouter({
 
 export function RouterPlugin(app) {
 
+  // intercept all routes to check if they require authentication
+  // redirect over login page if applicable
   const auth = useAuthStore()
   router.beforeEach((to) => {
     if (to.meta.requiresAuth && !auth.isLoggedIn) {

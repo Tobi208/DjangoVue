@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import Post
 
 class PostSerializer(serializers.ModelSerializer):
+    
+    # replace user_id with user_name on GET
     author = serializers.SerializerMethodField()
 
     class Meta:
