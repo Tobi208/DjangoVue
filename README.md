@@ -39,6 +39,8 @@ HOST=<ip>
 PORT=8000
 CORS_ALLOWED_ORIGIN=http://<ip>:3000
 SECRET_KEY=supersecretkey
+TOKEN_EXPIRATION=1800
+REFRESH_TOKEN_EXPIRATION=604800
 ```
 
 Create the Django Database and a user and runserver
