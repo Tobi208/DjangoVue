@@ -1,5 +1,13 @@
 import { defineStore } from 'pinia'
 import { useCookies } from 'vue3-cookies'
+import jwtDecode from 'jwt-decode'
+
+const getExpiration = (token) => {
+  const decodedToken = jwtDecode(token)
+  const now = Math.floor(Date.now() / 1000)
+  const exp = decodedToken.exp
+  return exp - now
+}
 
 export const useAuthStore = defineStore('auth', {
   state: () => {
@@ -12,19 +20,19 @@ export const useAuthStore = defineStore('auth', {
     }
   },
   actions: {
-    setUser(user) {
+    setUser(user, expiration) {
       this.user = user
       const { cookies } = useCookies()
       if (user)
-        cookies.set('user', user, import.meta.env.VITE_REFRESH_TOKEN_EXPIRATION)
+        cookies.set('user', user, expiration)
       else
         cookies.remove('user')
     },
-    setToken(token) {
+    setToken(token, expiration) {
       this.token = token
       const { cookies } = useCookies()
       if (token)
-        cookies.set('token', token, `${import.meta.env.VITE_TOKEN_EXPIRATION}s`)
+        cookies.set('token', token, expiration)
       else
         cookies.remove('token')
     },
@@ -37,19 +45,19 @@ export const useAuthStore = defineStore('auth', {
         return this.token
       }
     },
-    setRefreshToken(refreshToken) {
+    setRefreshToken(refreshToken, expiration) {
       this.refreshToken = refreshToken
       const { cookies } = useCookies()
       if (refreshToken)
-        cookies.set('refreshToken', refreshToken, `${import.meta.env.VITE_REFRESH_TOKEN_EXPIRATION}s`)
+        cookies.set('refreshToken', refreshToken, expiration)
       else
         cookies.remove('refreshToken')
     },
-    setIsLoggedIn(isLoggedIn) {
+    setIsLoggedIn(isLoggedIn, expiration) {
       this.isLoggedIn = isLoggedIn
       const { cookies } = useCookies()
       if (isLoggedIn)
-        cookies.set('isLoggedIn', isLoggedIn, `${import.meta.env.VITE_REFRESH_TOKEN_EXPIRATION}s`)
+        cookies.set('isLoggedIn', isLoggedIn, expiration)
       else
         cookies.remove('isLoggedIn')
     },
@@ -64,10 +72,12 @@ export const useAuthStore = defineStore('auth', {
           throw new Error('Login failed')
       } else {
           const r = await response.json()
-          this.setToken(r.access)
-          this.setRefreshToken(r.refresh)
-          this.setUser({ username })
-          this.setIsLoggedIn(true)
+          const tokenExpiration = `${getExpiration(r.access)}s`
+          const refreshTokenExpiration = `${getExpiration(r.refresh)}s`
+          this.setToken(r.access, tokenExpiration)
+          this.setRefreshToken(r.refresh, refreshTokenExpiration)
+          this.setUser({ username }, refreshTokenExpiration)
+          this.setIsLoggedIn(true, refreshTokenExpiration)
       }
     },
     async refresh() {
@@ -84,18 +94,22 @@ export const useAuthStore = defineStore('auth', {
           throw new Error('Token refresh failed')
         } else {
           const r = await response.json()
-          this.setToken(r.access)
-          this.setRefreshToken(r.refresh)
+          const tokenExpiration = `${getExpiration(r.access)}s`
+          const refreshTokenExpiration = `${getExpiration(r.refresh)}s`
+          this.setToken(r.access, tokenExpiration)
+          this.setRefreshToken(r.refresh, refreshTokenExpiration)
+          this.setUser(this.user, refreshTokenExpiration)
+          this.setIsLoggedIn(true, refreshTokenExpiration)
         }
       } else {
         throw new Error('Refresh token expired')
       }
     },
     logout() {
-      this.setToken(null)
-      this.setRefreshToken(null)
-      this.setUser(null)
-      this.setIsLoggedIn(false)
+      this.setToken(null, null)
+      this.setRefreshToken(null, null)
+      this.setUser(null, null)
+      this.setIsLoggedIn(false, null)
     },
   },
 })
