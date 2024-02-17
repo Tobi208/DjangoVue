@@ -1,3 +1,70 @@
+<script setup>
+import { ref, computed, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+
+// router
+const router = useRouter()
+const route = useRoute()
+
+// store for persistent data
+const authStore = useAuthStore()
+const isLoggedIn = computed(() => authStore.isLoggedIn)
+const user = computed(() => authStore.user)
+
+// reactive input data
+const username = ref('')
+const password = ref('')
+const error = ref(null)
+
+// ui logic
+// animate dot dot dot on login button while auth is loading
+const loggingIn = ref(false)
+const dotdotdot = ref('.')
+const startDotAnimation = () => {
+  let dotCount = 0
+  dotdotdot.value = '.'
+  const iId = setInterval(() => {
+    dotCount = (dotCount % 5) + 1 
+    dotdotdot.value = '.'.repeat(dotCount) 
+  }, 100)
+
+  return iId
+}
+let intervalId = null
+
+// cleanup if page is left during animation
+onUnmounted(() => {
+  if (loggingIn.value) {
+    clearInterval(intervalId)
+  }
+})
+
+// authenticate through auth store
+const login = async () => {
+  intervalId = startDotAnimation()
+  loggingIn.value = true
+  try {
+    await authStore.login(username.value, password.value)
+    username.value = ''
+    password.value = ''
+    error.value = ''
+    router.push(route.query.redirect || '/')
+  } catch (e) {
+    error.value = "Failed to login. Please check your credentials."
+  }
+  loggingIn.value = false
+  clearInterval(intervalId)
+}
+
+const logout = () => {
+  authStore.logout()
+  username.value = ''
+  password.value = ''
+  error.value = ''
+}
+</script>
+
 <template>
   <div v-if="!isLoggedIn" class="login-container">
     <h2>Login</h2>
@@ -10,68 +77,35 @@
         <label for="password">Password:</label>
         <input v-model="password" type="password" id="password" required>
       </div>
-      <button type="submit">Login</button>
+      <button type="submit" :disabled="loggingIn">{{ loggingIn ? dotdotdot : 'Login' }}</button>
     </form>
     <p v-if="error" class="error">{{ error }}</p>
   </div>
   <div v-if="isLoggedIn" class="login-container">
-    <h2>Hey, {{ user.username }}</h2>
+    <h3>Hey, {{ user.username }}, you are already logged in</h3>
     <button @click="logout">Logout</button>
-    <p v-if="error" class="error">{{ error }}</p>
   </div>
 </template>
 
-<script>
-import { mapState, mapActions } from 'pinia'
-import { useAuthStore } from '@/stores/auth'
+<style lang="sass" scoped>
+.login-container
+  max-width: 400px
+  margin: auto
+  padding: 20px
 
-export default {
-  data() {
-    return {
-      username: '',
-      password: '',
-      error: null,
-    }
-  },
-  computed: {
-    ...mapState(useAuthStore, ['isLoggedIn', 'user'])
-  },
-  methods: {
-    ...mapActions(useAuthStore, { authLogin: 'login', authLogout: 'logout' }),
-    async login() {
-      await this.authLogin(this.username, this.password)
-            .then(() => {
-              if (this.$router.currentRoute.value.query.redirect) {
-                this.$router.push(this.$router.currentRoute.value.query.redirect)
-              } else {
-                this.$router.push('/')
-              }
-            })
-            .catch(() => this.error = "Failed to login. Please check your credentials.")
-    },
-    logout() {
-      this.authLogout()
-    }
-  },
-}
-</script>
+  .form-group
+    margin-bottom: 20px
+    width: 100%
 
-<style>
-.login-container {
-  max-width: 400px;
-  margin: auto;
-  padding: 20px;
-}
+    label
+      display: block
 
-.form-group {
-  margin-bottom: 20px;
-}
+    input
+      width: 100%
+  
+  button
+    width: 100%
 
-.form-group label {
-  display: block;
-}
-
-.error {
-  color: red;
-}
+.error
+  color: red
 </style>
