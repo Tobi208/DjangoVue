@@ -1,14 +1,11 @@
 # DjangoVue
 
-Template Repository for a `Django` backend (hosted on `PythonAnywhere`) and a `Vue3` frontend (hosted on `Netlify`) with features including
+Template Repository for a `Django` backend (hosted on e.g. `PythonAnywhere`) and a `Vue3` frontend (hosted on e.g. `GitHub Pages`, `Netlify`, etc.) with features including
 
 * code formatting `eslint`
 * styling: `sass`
-* storage through `pinia`
+* storage: `pinia`
 * authentication: `simplejwt`
-* edge functions:`netlify`
-* dynamic file hosting: `backblaze`
-
 
 # Backend
 
@@ -31,7 +28,7 @@ $ pip install --upgrade pip
 $ pip install -r requirements.txt
 ```
 
-Create and fill in `.env` file after obtaining ip with `hostname -I`
+Create and fill in `.env` file after obtaining `ip` with `hostname -I`
 
 ```env
 DEBUG=True
@@ -49,7 +46,7 @@ Create the Django Database and a user and runserver
 $ python manage.py makemigrations api
 $ python manage.py migrate 
 $ python manage.py createsuperuser
-$ python manage.py runserver
+$ python manage.py runserver <ip>:8000
 ```
 
 
@@ -58,12 +55,13 @@ $ python manage.py runserver
 Install `NodeJs` and `npm` (on `Ubuntu 22.04 LTS`).
 
 ```bash
+$ cd frontend
 $ sudo apt update
 $ sudo apt install nodejs
 $ sudo apt install npm
 ```
 
-Create and fill in `.env` file after obtaining ip with `hostname -I`
+Create and fill in `.env` file after obtaining `ip` with `hostname -I`
 
 ```env
 VITE_API_BASE_URL=http://<ip>:8000/api/
@@ -72,7 +70,6 @@ VITE_API_BASE_URL=http://<ip>:8000/api/
 Install packages and run
 
 ```bash
-$ cd frontend
 $ npm install
 $ npm run dev
 ```
@@ -80,7 +77,7 @@ $ npm run dev
 
 # Development
 
-Add to `.vscode/tasks.json` after obtaining ip with `hostname -I` start dev with `CTRL+SHIFT+B`
+Add to `.vscode/tasks.json` after obtaining `ip` with `hostname -I` and start dev with `CTRL+SHIFT+B`
 
 ```json
 {
