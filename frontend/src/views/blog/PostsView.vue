@@ -3,19 +3,19 @@ import { ref, onMounted } from 'vue'
 import { useBlogStore } from '@/stores/blog'
 
 // store for persistent data
-const blogStore = useBlogStore()
+const blog = useBlogStore()
 
 // reactive input data
 const newPost = ref({ title: '', content: '' })
 
 // async fetch data
 onMounted(async () => {
-  await blogStore.fetchPosts()
+  await blog.fetchPosts()
 })
 
 // make api call through store
 const savePost = async () => {
-  await blogStore.addPost(newPost.value)
+  await blog.addPost(newPost.value)
   newPost.value = { title: '', content: '' }
 }
 </script>
@@ -38,7 +38,7 @@ const savePost = async () => {
   </div>
   <div>
     <h2>Posts</h2>
-    <div v-for="post in blogStore.posts" :key="post.id">
+    <div v-for="post in blog.posts" :key="post.id">
       <div>{{ post.title }} by <b>{{ post.author }}</b></div>
       <p><i>{{ post.content }}</i></p>
     </div>

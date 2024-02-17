@@ -49,12 +49,10 @@ export const useAuthStore = defineStore('auth', {
 
     // getters that might trigger actions
     async getToken() {
-      if (cookies.isKey('token')) {
-        return this.token
-      } else {
+      if (!cookies.isKey('token')) {
         await this.refresh()
-        return this.token
       }
+      return this.token
     },
 
     // actions
@@ -75,16 +73,15 @@ export const useAuthStore = defineStore('auth', {
       if (response.status !== 200) {
           this.logout()
           throw new Error('Login failed')
-      // populate state on success
-      } else {
-          const r = await response.json()
-          const tokenExpiration = getExpiration(r.access)
-          const refreshTokenExpiration = getExpiration(r.refresh)
-          this.setToken(r.access, tokenExpiration)
-          this.setRefreshToken(r.refresh, refreshTokenExpiration)
-          this.setUser({ username }, refreshTokenExpiration)
-          this.setIsLoggedIn(true, refreshTokenExpiration)
       }
+      // populate state on success
+      const r = await response.json()
+      const tokenExpiration = getExpiration(r.access)
+      const refreshTokenExpiration = getExpiration(r.refresh)
+      this.setToken(r.access, tokenExpiration)
+      this.setRefreshToken(r.refresh, refreshTokenExpiration)
+      this.setUser({ username }, refreshTokenExpiration)
+      this.setIsLoggedIn(true, refreshTokenExpiration)
     },
     
     /**
@@ -92,33 +89,31 @@ export const useAuthStore = defineStore('auth', {
      */
     async refresh() {
       // check if a refresh token is present in the cookies
-      if (cookies.isKey('refreshToken')) {
-        // attempt refresh
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}token/refresh/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh: this.refreshToken })
-        })
-        // probably internal server error on failure
-        if (response.status !== 200) {
-          this.logout()
-          throw new Error('Token refresh failed')
-        // populate state on success
-        } else {
-          const r = await response.json()
-          const tokenExpiration = getExpiration(r.access)
-          const refreshTokenExpiration = getExpiration(r.refresh)
-          this.setToken(r.access, tokenExpiration)
-          this.setRefreshToken(r.refresh, refreshTokenExpiration)
-          this.setUser(this.user, refreshTokenExpiration)
-          this.setIsLoggedIn(true, refreshTokenExpiration)
-        }
       // require a reset of the authentication
       // catching this error should redirect to the login page
-      } else {
+      if (!cookies.isKey('refreshToken')) {
         this.logout()
         throw new Error('Refresh token expired')
       }
+      // attempt refresh
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}token/refresh/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh: this.refreshToken })
+      })
+      // probably internal server error on failure
+      if (response.status !== 200) {
+        this.logout()
+        throw new Error('Token refresh failed')
+      }
+      // populate state on success
+      const r = await response.json()
+      const tokenExpiration = getExpiration(r.access)
+      const refreshTokenExpiration = getExpiration(r.refresh)
+      this.setToken(r.access, tokenExpiration)
+      this.setRefreshToken(r.refresh, refreshTokenExpiration)
+      this.setUser(this.user, refreshTokenExpiration)
+      this.setIsLoggedIn(true, refreshTokenExpiration)
     },
 
     /**
