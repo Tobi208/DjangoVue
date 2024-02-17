@@ -1,13 +1,6 @@
 import { defineStore } from 'pinia'
 import { useCookies } from 'vue3-cookies'
-import jwtDecode from 'jwt-decode'
-
-const getExpiration = (token) => {
-  const decodedToken = jwtDecode(token)
-  const now = Math.floor(Date.now() / 1000)
-  const exp = decodedToken.exp
-  return exp - now
-}
+import { getExpiration } from '@/plugins/utils'
 
 export const useAuthStore = defineStore('auth', {
   state: () => {
@@ -72,8 +65,8 @@ export const useAuthStore = defineStore('auth', {
           throw new Error('Login failed')
       } else {
           const r = await response.json()
-          const tokenExpiration = `${getExpiration(r.access)}s`
-          const refreshTokenExpiration = `${getExpiration(r.refresh)}s`
+          const tokenExpiration = getExpiration(r.access)
+          const refreshTokenExpiration = getExpiration(r.refresh)
           this.setToken(r.access, tokenExpiration)
           this.setRefreshToken(r.refresh, refreshTokenExpiration)
           this.setUser({ username }, refreshTokenExpiration)
@@ -94,8 +87,8 @@ export const useAuthStore = defineStore('auth', {
           throw new Error('Token refresh failed')
         } else {
           const r = await response.json()
-          const tokenExpiration = `${getExpiration(r.access)}s`
-          const refreshTokenExpiration = `${getExpiration(r.refresh)}s`
+          const tokenExpiration = getExpiration(r.access)
+          const refreshTokenExpiration = getExpiration(r.refresh)
           this.setToken(r.access, tokenExpiration)
           this.setRefreshToken(r.refresh, refreshTokenExpiration)
           this.setUser(this.user, refreshTokenExpiration)
