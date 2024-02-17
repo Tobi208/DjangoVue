@@ -2,17 +2,14 @@ import axios from 'axios'
 import router from '@/plugins/router'
 import { useAuthStore } from '@/stores/auth'
 
-function createAPIInstance() {
-  return axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
-    headers: {
-      'Content-Type': 'application/json'
-    },
-  })
-}
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  },
+})
 
 export function APIPlugin(app) {
-  const api = createAPIInstance()
   const auth = useAuthStore()
 
   api.interceptors.request.use(async (config) => {
@@ -31,3 +28,5 @@ export function APIPlugin(app) {
 
   app.config.globalProperties.$api = api
 }
+
+export default api
