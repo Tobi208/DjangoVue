@@ -1,11 +1,12 @@
 # DjangoVue
 
-Template Repository for a `Django` backend (hosted on e.g. `PythonAnywhere`) and a `Vue3` frontend (hosted on e.g. `GitHub Pages`, `Netlify`, etc.) with features including
+Template for fullstack webapp with a `Django Restframwork` backend (hosted on e.g. `PythonAnywhere`) and a `Vue3` frontend (hosted on e.g. `GitHub Pages`, `Netlify`, etc) with some standard features including:
 
 * code formatting `eslint`
 * styling: `sass`
 * storage: `pinia`
 * authentication: `simplejwt`
+* development: `vscode`
 
 # Backend
 
