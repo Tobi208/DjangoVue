@@ -1,28 +1,33 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useBlogStore } from '@/stores/blog'
 
 // store for persistent data
 const blog = useBlogStore()
+const posts = computed(() => blog.posts)
 
 // reactive input data
 const newPost = ref({ title: '', content: '' })
 
 // async fetch data
-onMounted(async () => {
-  await blog.fetchPosts()
+onMounted(() => {
+  blog.fetchPosts()
 })
 
 // make api call through store
-const savePost = async () => {
-  await blog.addPost(newPost.value)
+const savePost = () => {
+  blog.addPost(newPost.value)
   newPost.value = { title: '', content: '' }
+}
+
+const deleteAll = () => {
+  blog.deleteAllPosts()
 }
 </script>
 
 <template>
   <h3>This is the posts page. It requires authentication.</h3>
-  <div class="new-post-container">
+  <div class="form-container">
     <h2>New Post</h2>
     <form @submit.prevent="savePost">
       <div class="form-group">
@@ -37,8 +42,12 @@ const savePost = async () => {
     </form>
   </div>
   <div>
+    <h2>Delete all Posts</h2>
+    <button @click="deleteAll">Purge</button>
+  </div>
+  <div>
     <h2>Posts</h2>
-    <div v-for="post in blog.posts" :key="post.id">
+    <div v-for="post in posts" :key="post.id">
       <div>{{ post.title }} by <b>{{ post.author }}</b></div>
       <p><i>{{ post.content }}</i></p>
     </div>
@@ -46,10 +55,8 @@ const savePost = async () => {
 </template>
 
 <style lang="sass" scoped>
-.new-post-container
+.form-container
   max-width: 400px
-  margin: auto
-  padding: 20px
 
   .form-group
     margin-bottom: 20px

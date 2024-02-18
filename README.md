@@ -65,7 +65,7 @@ $ sudo apt install npm
 Create and fill in `.env` file after obtaining `ip` with `hostname -I`
 
 ```env
-VITE_API_BASE_URL=http://<ip>:8000/api/
+VITE_API_BASE_URL=http://<ip>:8000/api
 ```
 
 Install packages and run

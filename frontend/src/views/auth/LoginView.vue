@@ -8,9 +8,9 @@ const router = useRouter()
 const route = useRoute()
 
 // store for persistent data
-const authStore = useAuthStore()
-const isLoggedIn = computed(() => authStore.isLoggedIn)
-const user = computed(() => authStore.user)
+const auth = useAuthStore()
+const isLoggedIn = computed(() => auth.isLoggedIn)
+const user = computed(() => auth.user)
 
 // reactive input data
 const username = ref('')
@@ -45,7 +45,7 @@ const login = async () => {
   intervalId = startDotAnimation()
   loggingIn.value = true
   try {
-    await authStore.login(username.value, password.value)
+    await auth.login(username.value, password.value)
     username.value = ''
     password.value = ''
     error.value = ''
@@ -58,7 +58,7 @@ const login = async () => {
 }
 
 const logout = () => {
-  authStore.logout()
+  auth.logout()
   username.value = ''
   password.value = ''
   error.value = ''
@@ -66,7 +66,7 @@ const logout = () => {
 </script>
 
 <template>
-  <div v-if="!isLoggedIn" class="login-container">
+  <div v-if="!isLoggedIn" class="form-container">
     <h2>Login</h2>
     <form @submit.prevent="login">
       <div class="form-group">
@@ -81,17 +81,15 @@ const logout = () => {
     </form>
     <p v-if="error" class="error">{{ error }}</p>
   </div>
-  <div v-if="isLoggedIn" class="login-container">
+  <div v-if="isLoggedIn" class="form-container">
     <h3>Hey, {{ user.username }}, you are already logged in</h3>
     <button @click="logout">Logout</button>
   </div>
 </template>
 
 <style lang="sass" scoped>
-.login-container
+.form-container
   max-width: 400px
-  margin: auto
-  padding: 20px
 
   .form-group
     margin-bottom: 20px

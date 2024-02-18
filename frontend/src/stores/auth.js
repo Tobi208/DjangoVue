@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useBlogStore } from '@/stores/blog'
 import { useCookies } from 'vue3-cookies'
 import { getExpiration } from '@/plugins/utils'
 
@@ -10,6 +11,7 @@ const { cookies } = useCookies()
  * Automatically refreshes token if possible.
  */
 export const useAuthStore = defineStore('auth', {
+
   state: () => {
   // get state from cookies or default to empty state
   return {
@@ -19,6 +21,7 @@ export const useAuthStore = defineStore('auth', {
       isLoggedIn: cookies.get('isLoggedIn') || false,
     }
   },
+
   actions: {
 
     // used by setters to sync with cookies
@@ -64,7 +67,7 @@ export const useAuthStore = defineStore('auth', {
      */
     async login(username, password) {
       // attempt login
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}token/`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/token/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
@@ -96,7 +99,7 @@ export const useAuthStore = defineStore('auth', {
         throw new Error('Refresh token expired')
       }
       // attempt refresh
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}token/refresh/`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/token/refresh/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh: this.refreshToken })
@@ -117,13 +120,22 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
-     * Reset auth state to empty
+     * Give up all resources
      */
-    logout() {
+    free() {
       this.setToken(null, null)
       this.setRefreshToken(null, null)
       this.setUser(null, null)
       this.setIsLoggedIn(false, null)
+    },
+
+    /**
+     * Reset auth state to empty
+     */
+    logout() {
+      const blog = useBlogStore()
+      blog.free()
+      this.free()
     },
   },
 })
